@@ -3,7 +3,9 @@ import { Button } from "./button";
 
 export function ListSkeleton({ rows = 3 }: { rows?: number }) {
   return (
-    <div aria-hidden className="space-y-5 py-2">
+    <div aria-hidden className="space-y-6 py-2">
+      <div className="h-8 w-40 rounded-sm bg-subtle" />
+      <div className="h-14 rounded-lg bg-subtle" />
       {Array.from({ length: rows }, (_, i) => (
         <div key={i} className="flex gap-3">
           <div className="size-5 rounded-full bg-subtle" />
@@ -20,17 +22,21 @@ export function ListSkeleton({ rows = 3 }: { rows?: number }) {
 export function EmptyState({
   title,
   description,
+  hint,
   action,
 }: {
   title: string;
   description?: string;
+  /** Optional example, shown in a quiet monospace line. */
+  hint?: React.ReactNode;
   action?: React.ReactNode;
 }) {
   return (
-    <div className="py-6">
-      <p className="text-base font-medium">{title}</p>
-      {description && <p className="mt-1 text-sm text-muted">{description}</p>}
-      {action && <div className="mt-4">{action}</div>}
+    <div className="animate-enter border-t border-border py-10">
+      <p className="text-section font-semibold">{title}</p>
+      {description && <p className="mt-1 max-w-sm text-body text-muted">{description}</p>}
+      {hint && <p className="mt-4 text-meta text-muted">{hint}</p>}
+      {action && <div className="mt-6">{action}</div>}
     </div>
   );
 }
@@ -48,13 +54,13 @@ export function LoadError({
 }) {
   return (
     <div role="alert" className="rounded-lg border border-border bg-surface p-6">
-      <p className="font-medium">We couldn&apos;t load your {what}.</p>
-      <p className="mt-1 text-sm text-muted">
+      <p className="text-section font-semibold">We couldn&apos;t load your {what}.</p>
+      <p className="mt-1 text-body text-muted">
         {kind === "unreadable"
           ? "The saved data looks damaged. Starting fresh keeps a backup copy of it."
           : "Your browser isn't allowing this app to use storage right now."}
       </p>
-      <div className="mt-4 flex flex-wrap gap-2">
+      <div className="mt-6 flex flex-wrap gap-2">
         <Button variant="primary" onClick={onRetry}>
           Try again
         </Button>
@@ -64,23 +70,45 @@ export function LoadError({
   );
 }
 
-export function PageHeader({ title, subtitle, children }: { title: string; subtitle?: string; children?: React.ReactNode }) {
+/** Page title with an optional quiet line beneath and actions aligned right. */
+export function PageHeader({
+  title,
+  meta,
+  actions,
+}: {
+  title: React.ReactNode;
+  meta?: React.ReactNode;
+  actions?: React.ReactNode;
+}) {
   return (
-    <header className="mb-8">
-      <div className="flex items-start justify-between gap-4">
-        <h1 className="text-[28px] font-semibold leading-tight tracking-tight md:text-[32px]">{title}</h1>
-        {children}
+    <header className="mb-8 flex flex-wrap items-end justify-between gap-x-6 gap-y-3">
+      <div className="min-w-0">
+        <h1 className="break-words text-page font-semibold">{title}</h1>
+        {meta && <p className="mt-1.5 text-sm text-muted">{meta}</p>}
       </div>
-      {subtitle && <p className="mt-1 text-sm text-muted">{subtitle}</p>}
+      {actions && <div className="flex shrink-0 flex-wrap gap-2">{actions}</div>}
     </header>
   );
 }
 
-export function SectionHeading({ children, count }: { children: React.ReactNode; count?: number }) {
+/** Heading for a secondary section of a page (Completed, Upcoming). */
+export function SectionHeading({ id, children, count }: { id?: string; children: React.ReactNode; count?: number }) {
   return (
-    <h2 className="mb-2 flex items-baseline gap-2 text-lg font-semibold">
+    <h2 id={id} className="flex items-baseline gap-2 text-section font-semibold">
       {children}
       {count !== undefined && <span className="text-sm font-normal text-muted">{count}</span>}
     </h2>
+  );
+}
+
+/** Small uppercase label above a group of tasks (Overdue, Today, No date). */
+export function GroupLabel({ id, children, tone = "muted" }: { id?: string; children: React.ReactNode; tone?: "muted" | "danger" }) {
+  return (
+    <h3
+      id={id}
+      className={`mb-1 text-label font-semibold uppercase ${tone === "danger" ? "text-danger" : "text-muted"}`}
+    >
+      {children}
+    </h3>
   );
 }

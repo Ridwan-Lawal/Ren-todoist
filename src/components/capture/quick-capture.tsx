@@ -65,10 +65,12 @@ export function QuickCapture({
     }
   }
 
+  const hasHint = !!message || showPreview || (ignoreParsing && details.length > 0);
+
   return (
-    <form onSubmit={submit} className="mb-6">
-      <div className="flex items-center gap-3 rounded-lg border border-border bg-surface px-4 transition-colors duration-150 focus-within:border-accent focus-within:ring-2 focus-within:ring-accent/15">
-        <span aria-hidden className="text-xl leading-none text-muted">
+    <form onSubmit={submit} className="mb-10">
+      <div className="flex items-center gap-3 rounded-lg border border-border bg-surface pl-4 pr-2 shadow-[0_1px_2px_rgb(24_24_22/0.04)] transition-[border-color,box-shadow] duration-150 hover:border-muted/40 focus-within:border-accent focus-within:shadow-none focus-within:ring-4 focus-within:ring-accent/10">
+        <span aria-hidden className="text-xl leading-none text-accent">
           +
         </span>
         <label htmlFor={QUICK_CAPTURE_ID} className="sr-only">
@@ -87,31 +89,43 @@ export function QuickCapture({
           enterKeyHint="done"
           aria-describedby={`${QUICK_CAPTURE_ID}-hint`}
           aria-invalid={message ? true : undefined}
-          className="min-h-14 min-w-0 flex-1 bg-transparent text-base placeholder:text-muted focus:outline-none focus-visible:outline-none"
+          className="min-h-15 min-w-0 flex-1 bg-transparent text-capture placeholder:text-muted focus:outline-none focus-visible:outline-none"
         />
         <button
           type="submit"
           aria-label="Add task"
-          className="-mr-2 flex size-11 shrink-0 items-center justify-center rounded-md text-muted hover:bg-subtle hover:text-foreground"
+          tabIndex={value.trim() ? 0 : -1}
+          className={`flex min-h-11 shrink-0 items-center gap-1.5 rounded-md px-3 text-meta transition-[opacity,color] duration-150 hover:bg-subtle hover:text-foreground ${
+            value.trim() ? "text-muted opacity-100" : "pointer-events-none opacity-0"
+          }`}
         >
-          <span aria-hidden>↵</span>
+          <span className="hidden sm:inline">Enter to add</span>
+          <span aria-hidden className="sm:hidden">
+            Add
+          </span>
         </button>
       </div>
 
-      <div id={`${QUICK_CAPTURE_ID}-hint`} aria-live="polite" className="mt-2 min-h-6 px-1 text-[13px]">
+      <div
+        id={`${QUICK_CAPTURE_ID}-hint`}
+        aria-live="polite"
+        className={`overflow-hidden px-1 text-meta transition-[max-height,margin] duration-150 ${hasHint ? "mt-2 max-h-16" : "mt-0 max-h-0"}`}
+      >
         {message ? (
           <p className="text-danger">{message}</p>
         ) : showPreview ? (
-          <p className="flex items-center gap-2 text-muted">
-            <span>
-              <span className="sr-only">Detected: </span>
-              {details.join(" · ")}
-            </span>
+          <p className="flex flex-wrap items-center gap-1.5 text-muted">
+            <span className="sr-only">Detected: </span>
+            {details.map((detail) => (
+              <span key={detail} className="rounded-sm bg-subtle px-1.5 py-0.5 text-foreground/80">
+                {detail}
+              </span>
+            ))}
             <button
               type="button"
               onClick={() => setIgnoreParsing(true)}
               aria-label="Ignore detected details and use the exact text"
-              className="flex size-6 items-center justify-center rounded-sm hover:bg-subtle hover:text-foreground"
+              className="flex size-7 items-center justify-center rounded-sm hover:bg-subtle hover:text-foreground"
             >
               ×
             </button>

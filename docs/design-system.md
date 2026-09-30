@@ -136,6 +136,10 @@ Use one primary typeface throughout the application unless there is a strong pro
 
 Typography should create hierarchy without relying heavily on color.
 
+These sizes are implemented as tokens (`text-page`, `text-section`, `text-capture`, `text-title`, `text-body`, `text-meta`, `text-label`). Use the tokens rather than arbitrary pixel sizes.
+
+Group labels (for example, Overdue / Today / No date) use `text-label`: small, semibold, uppercase, muted.
+
 ---
 
 # 6. Typography Rules
@@ -388,6 +392,8 @@ Priority indicators should be subtle.
 
 Do not make the task list look like a wall of red, orange, and blue.
 
+Priority is shown by the task's checkbox ring (High → `danger`, Medium → `warning`, Low/None → neutral) plus a muted text label in the metadata ("High priority"), so it never relies on color alone. Red text is reserved for overdue dates and errors.
+
 ---
 
 # 15. Tags
@@ -450,6 +456,8 @@ A completed task may:
 - Use a short transition
 
 Do not permanently hide completed tasks immediately without giving the user a clear indication of what happened.
+
+In Ren, a checked task shows its done state in place for about 600ms, with the tick drawing in, before it moves to "Completed today". Checking it again during that time cancels. The completion is announced to screen readers.
 
 ---
 

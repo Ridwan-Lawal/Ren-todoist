@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useId, useRef, useState } from "react";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import { menuItemClasses } from "@/components/ui/styles";
 import { useSafeAction } from "@/components/ui/notice";
 import type { Project } from "@/lib/projects/project-types";
 import {
@@ -18,8 +19,7 @@ import { PRIORITY_LABELS } from "./task-labels";
 
 type View = "main" | "reschedule" | "priority" | "project";
 
-const itemClass =
-  "flex min-h-11 w-full items-center rounded-sm px-3 text-left text-sm hover:bg-subtle focus-visible:bg-subtle md:min-h-9";
+const itemClass = menuItemClasses;
 
 export function TaskMenu({ task, today, projects }: { task: Task; today: string; projects: Project[] }) {
   const [open, setOpen] = useState(false);
@@ -67,7 +67,7 @@ export function TaskMenu({ task, today, projects }: { task: Task; today: string;
         aria-expanded={open}
         aria-controls={open ? panelId : undefined}
         onClick={() => (open ? close() : setOpen(true))}
-        className="flex size-11 items-center justify-center rounded-md text-muted transition-opacity duration-150 hover:bg-subtle hover:text-foreground md:size-9 md:opacity-0 md:group-hover:opacity-100 md:group-focus-within:opacity-100 md:aria-expanded:opacity-100"
+        className="flex size-11 items-center justify-center rounded-md text-muted/70 transition-[opacity,background-color,color] duration-150 hover:bg-border/60 hover:text-foreground aria-expanded:bg-border/60 aria-expanded:text-foreground md:size-9 md:opacity-0 md:group-hover:opacity-100 md:group-focus-within:opacity-100 md:aria-expanded:opacity-100"
       >
         <svg aria-hidden viewBox="0 0 20 20" className="size-5" fill="currentColor">
           <circle cx="4" cy="10" r="1.5" />
@@ -80,7 +80,7 @@ export function TaskMenu({ task, today, projects }: { task: Task; today: string;
         <div
           id={panelId}
           data-menu-panel
-          className="animate-enter absolute right-0 top-full z-30 mt-1 w-64 rounded-lg border border-border bg-surface p-1 shadow-popover"
+          className="animate-enter absolute right-0 top-full z-30 mt-1 w-64 origin-top-right rounded-lg border border-border bg-surface p-1 shadow-popover"
         >
           {view !== "main" && (
             <button type="button" className={`${itemClass} text-muted`} onClick={() => setView("main")}>
@@ -111,6 +111,7 @@ export function TaskMenu({ task, today, projects }: { task: Task; today: string;
                   Archive
                 </button>
               )}
+              <div role="separator" className="my-1 h-px bg-border" />
               <button
                 type="button"
                 className={`${itemClass} text-danger`}

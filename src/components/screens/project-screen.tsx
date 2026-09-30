@@ -7,10 +7,11 @@ import { focusQuickCapture, QuickCapture } from "@/components/capture/quick-capt
 import { DataGate } from "@/components/layout/data-gate";
 import { ProjectNameForm } from "@/components/project/project-name-form";
 import { TaskItem, TaskList } from "@/components/task/task-item";
+import { BackLink } from "@/components/ui/back-link";
 import { Button, buttonClasses } from "@/components/ui/button";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { useSafeAction } from "@/components/ui/notice";
-import { EmptyState } from "@/components/ui/states";
+import { EmptyState, GroupLabel, PageHeader } from "@/components/ui/states";
 import { deleteProject, renameProject } from "@/lib/projects/project-service";
 import { compareByAttention } from "@/lib/tasks/task-views";
 
@@ -45,15 +46,10 @@ export function ProjectScreen({ id }: { id: string }) {
 
         return (
           <>
-            <Link
-              href="/projects"
-              className="-ml-2 mb-6 inline-flex min-h-11 items-center rounded-md px-2 text-sm text-muted hover:text-foreground"
-            >
-              ← Projects
-            </Link>
+            <BackLink href="/projects" />
 
-            <header className="mb-8">
-              {renaming ? (
+            {renaming ? (
+              <div className="mb-8">
                 <ProjectNameForm
                   id="rename-project"
                   initialName={project.name}
@@ -65,25 +61,23 @@ export function ProjectScreen({ id }: { id: string }) {
                   }}
                   onCancel={() => setRenaming(false)}
                 />
-              ) : (
-                <>
-                  <h1 className="break-words text-[28px] font-semibold leading-tight tracking-tight md:text-[32px]">
-                    {project.name}
-                  </h1>
-                  <p className="mt-1 text-sm text-muted">
-                    {active.length} {active.length === 1 ? "task" : "tasks"}
-                  </p>
-                  <div className="mt-4 flex gap-2">
-                    <Button size="sm" onClick={() => setRenaming(true)}>
+              </div>
+            ) : (
+              <PageHeader
+                title={project.name}
+                meta={active.length === 0 ? "No open tasks" : `${active.length} open ${active.length === 1 ? "task" : "tasks"}`}
+                actions={
+                  <>
+                    <Button size="sm" variant="ghost" onClick={() => setRenaming(true)}>
                       Rename
                     </Button>
-                    <Button size="sm" variant="destructive" onClick={() => setConfirmDelete(true)}>
-                      Delete project
+                    <Button size="sm" variant="ghost-destructive" onClick={() => setConfirmDelete(true)}>
+                      Delete
                     </Button>
-                  </div>
-                </>
-              )}
-            </header>
+                  </>
+                }
+              />
+            )}
 
             <QuickCapture
               today={today}
@@ -98,11 +92,25 @@ export function ProjectScreen({ id }: { id: string }) {
                 action={<Button onClick={focusQuickCapture}>Add task</Button>}
               />
             ) : (
-              <TaskList label={`${project.name} tasks`}>
-                {[...active, ...completed].map((task) => (
-                  <TaskItem key={task.id} task={task} today={today} projects={projects} hideProject />
-                ))}
-              </TaskList>
+              <div className="flex flex-col gap-6">
+                {active.length > 0 && (
+                  <TaskList label={`Open tasks in ${project.name}`}>
+                    {active.map((task) => (
+                      <TaskItem key={task.id} task={task} today={today} projects={projects} hideProject />
+                    ))}
+                  </TaskList>
+                )}
+                {completed.length > 0 && (
+                  <div>
+                    <GroupLabel id="project-completed">Completed</GroupLabel>
+                    <TaskList labelledBy="project-completed">
+                      {completed.map((task) => (
+                        <TaskItem key={task.id} task={task} today={today} projects={projects} hideProject />
+                      ))}
+                    </TaskList>
+                  </div>
+                )}
+              </div>
             )}
 
             <ConfirmDialog

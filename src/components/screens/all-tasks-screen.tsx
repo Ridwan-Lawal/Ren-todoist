@@ -5,6 +5,7 @@ import { DataGate } from "@/components/layout/data-gate";
 import { PRIORITY_LABELS } from "@/components/task/task-labels";
 import { TaskItem, TaskList } from "@/components/task/task-item";
 import { Button } from "@/components/ui/button";
+import { SegmentedControl } from "@/components/ui/segmented-control";
 import { EmptyState, PageHeader } from "@/components/ui/states";
 import { TASK_PRIORITIES, TaskPriority, TaskStatus } from "@/lib/tasks/task-types";
 import { collectTags, DueFilter, filterTasks, sortTasks, TaskFilters, TaskSort } from "@/lib/tasks/task-views";
@@ -31,6 +32,7 @@ const SORT_OPTIONS: { value: TaskSort; label: string }[] = [
 
 const DEFAULT_FILTERS: TaskFilters = { status: "active" };
 
+/** A compact labelled select; the label reads as a prefix inside the control. */
 function Select({
   label,
   value,
@@ -42,16 +44,24 @@ function Select({
   onChange: (value: string) => void;
   children: React.ReactNode;
 }) {
+  const active = value !== "";
   return (
-    <label className="flex min-w-0 flex-col gap-1 text-[13px] text-muted">
-      {label}
+    <label
+      className={`relative inline-flex min-h-11 items-center gap-1.5 rounded-md border pl-3 text-sm transition-colors duration-150 md:min-h-9 ${
+        active ? "border-accent/40 bg-accent/5 text-foreground" : "border-border bg-surface text-muted hover:border-muted/40"
+      }`}
+    >
+      <span>{label}</span>
       <select
         value={value}
         onChange={(event) => onChange(event.target.value)}
-        className="min-h-11 w-full rounded-md border border-border bg-surface px-2 text-sm text-foreground md:min-h-9"
+        className="min-h-11 cursor-pointer appearance-none bg-transparent pr-7 font-medium text-foreground focus-visible:outline-none md:min-h-9"
       >
         {children}
       </select>
+      <span aria-hidden className="pointer-events-none absolute right-2.5 text-meta text-muted">
+        ▾
+      </span>
     </label>
   );
 }
@@ -60,8 +70,7 @@ export function AllTasksScreen() {
   const [filters, setFilters] = useState<TaskFilters>(DEFAULT_FILTERS);
   const [sort, setSort] = useState<TaskSort>("dueDate");
   const set = (patch: Partial<TaskFilters>) => setFilters((current) => ({ ...current, ...patch }));
-  const filtered =
-    filters.priority || filters.projectId || filters.tag || filters.due || filters.status !== "active";
+  const hasFilters = !!(filters.priority || filters.projectId || filters.tag || filters.due);
 
   return (
     <DataGate>
@@ -70,63 +79,78 @@ export function AllTasksScreen() {
         const tags = collectTags(tasks);
         return (
           <>
-            <PageHeader title="All Tasks" subtitle={`${visible.length} ${visible.length === 1 ? "task" : "tasks"}`} />
+            <PageHeader title="All Tasks" meta={`${visible.length} ${visible.length === 1 ? "task" : "tasks"}`} />
 
-            <div role="group" aria-label="Filter and sort" className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-3">
-              <Select label="Status" value={filters.status} onChange={(v) => set({ status: v as TaskStatus })}>
-                {STATUS_OPTIONS.map((o) => (
-                  <option key={o.value} value={o.value}>
-                    {o.label}
-                  </option>
-                ))}
-              </Select>
-              <Select
-                label="Priority"
-                value={filters.priority ?? ""}
-                onChange={(v) => set({ priority: (v || undefined) as TaskPriority | undefined })}
-              >
-                <option value="">Any</option>
-                {[...TASK_PRIORITIES].reverse().map((p) => (
-                  <option key={p} value={p}>
-                    {PRIORITY_LABELS[p]}
-                  </option>
-                ))}
-              </Select>
-              <Select label="Project" value={filters.projectId ?? ""} onChange={(v) => set({ projectId: v || undefined })}>
-                <option value="">Any</option>
-                {projects.map((p) => (
-                  <option key={p.id} value={p.id}>
-                    {p.name}
-                  </option>
-                ))}
-              </Select>
-              <Select label="Tag" value={filters.tag ?? ""} onChange={(v) => set({ tag: v || undefined })}>
-                <option value="">Any</option>
-                {tags.map((tag) => (
-                  <option key={tag} value={tag}>
-                    #{tag}
-                  </option>
-                ))}
-              </Select>
-              <Select
-                label="Due"
-                value={filters.due ?? ""}
-                onChange={(v) => set({ due: (v || undefined) as DueFilter | undefined })}
-              >
-                <option value="">Any time</option>
-                {DUE_OPTIONS.map((o) => (
-                  <option key={o.value} value={o.value}>
-                    {o.label}
-                  </option>
-                ))}
-              </Select>
-              <Select label="Sort by" value={sort} onChange={(v) => setSort(v as TaskSort)}>
-                {SORT_OPTIONS.map((o) => (
-                  <option key={o.value} value={o.value}>
-                    {o.label}
-                  </option>
-                ))}
-              </Select>
+            <div role="group" aria-label="Filter and sort" className="mb-8 flex flex-col gap-3">
+              <SegmentedControl
+                label="Status"
+                value={filters.status}
+                onChange={(status) => set({ status })}
+                options={STATUS_OPTIONS}
+              />
+              <div className="flex flex-wrap items-center gap-2">
+                <Select
+                  label="Priority"
+                  value={filters.priority ?? ""}
+                  onChange={(v) => set({ priority: (v || undefined) as TaskPriority | undefined })}
+                >
+                  <option value="">Any</option>
+                  {[...TASK_PRIORITIES].reverse().map((p) => (
+                    <option key={p} value={p}>
+                      {PRIORITY_LABELS[p]}
+                    </option>
+                  ))}
+                </Select>
+                <Select label="Project" value={filters.projectId ?? ""} onChange={(v) => set({ projectId: v || undefined })}>
+                  <option value="">Any</option>
+                  {projects.map((p) => (
+                    <option key={p.id} value={p.id}>
+                      {p.name}
+                    </option>
+                  ))}
+                </Select>
+                <Select label="Tag" value={filters.tag ?? ""} onChange={(v) => set({ tag: v || undefined })}>
+                  <option value="">Any</option>
+                  {tags.map((tag) => (
+                    <option key={tag} value={tag}>
+                      #{tag}
+                    </option>
+                  ))}
+                </Select>
+                <Select
+                  label="Due"
+                  value={filters.due ?? ""}
+                  onChange={(v) => set({ due: (v || undefined) as DueFilter | undefined })}
+                >
+                  <option value="">Any time</option>
+                  {DUE_OPTIONS.map((o) => (
+                    <option key={o.value} value={o.value}>
+                      {o.label}
+                    </option>
+                  ))}
+                </Select>
+                {hasFilters && (
+                  <Button size="sm" variant="ghost" onClick={() => setFilters({ status: filters.status })}>
+                    Clear filters
+                  </Button>
+                )}
+                <div className="ml-auto">
+                  <label className="inline-flex min-h-11 items-center gap-1.5 text-sm text-muted md:min-h-9">
+                    Sort
+                    <select
+                      value={sort}
+                      onChange={(event) => setSort(event.target.value as TaskSort)}
+                      className="cursor-pointer rounded-sm bg-transparent font-medium text-foreground"
+                    >
+                      {SORT_OPTIONS.map((o) => (
+                        <option key={o.value} value={o.value}>
+                          {o.label}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                </div>
+              </div>
             </div>
 
             {visible.length > 0 ? (
@@ -139,10 +163,11 @@ export function AllTasksScreen() {
               <EmptyState title="No tasks yet." description="Capture your first task from Today." />
             ) : (
               <EmptyState
-                title="No tasks match these filters."
-                action={
-                  filtered && <Button onClick={() => setFilters(DEFAULT_FILTERS)}>Clear filters</Button>
+                title={hasFilters ? "No tasks match these filters." : `No ${filters.status} tasks.`}
+                description={
+                  hasFilters ? undefined : `Nothing is ${filters.status === "active" ? "open" : filters.status} right now.`
                 }
+                action={hasFilters && <Button onClick={() => setFilters({ status: filters.status })}>Clear filters</Button>}
               />
             )}
           </>

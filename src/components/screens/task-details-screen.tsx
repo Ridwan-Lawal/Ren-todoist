@@ -6,10 +6,14 @@ import { useEffect, useRef, useState } from "react";
 import { DataGate } from "@/components/layout/data-gate";
 import { DateShortcuts } from "@/components/task/date-shortcuts";
 import { PRIORITY_LABELS } from "@/components/task/task-labels";
+import { BackLink } from "@/components/ui/back-link";
 import { Button, buttonClasses } from "@/components/ui/button";
+import { CheckCircle } from "@/components/ui/check-circle";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
-import { useSafeAction } from "@/components/ui/notice";
-import { EmptyState } from "@/components/ui/states";
+import { useAnnounce, useSafeAction } from "@/components/ui/notice";
+import { SegmentedControl } from "@/components/ui/segmented-control";
+import { EmptyState, GroupLabel } from "@/components/ui/states";
+import { inputClasses } from "@/components/ui/styles";
 import type { Project } from "@/lib/projects/project-types";
 import {
   addSubtask,
@@ -23,7 +27,7 @@ import {
   updateTask,
 } from "@/lib/tasks/task-service";
 import { Task, TASK_PRIORITIES, TaskUpdates, TITLE_MAX_LENGTH } from "@/lib/tasks/task-types";
-import { formatDateLabel, formatTime } from "@/lib/utils/dates";
+import { formatDateLabel, toDateKey } from "@/lib/utils/dates";
 
 export function TaskDetailsScreen({ id }: { id: string }) {
   return (
@@ -62,11 +66,19 @@ function useSavedNote() {
   };
 }
 
-const fieldLabel = "text-sm font-medium text-muted";
+function Property({ label, htmlFor, children }: { label: string; htmlFor?: string; children: React.ReactNode }) {
+  return (
+    <div className="grid grid-cols-1 gap-1.5 py-2.5 sm:grid-cols-[7rem_1fr] sm:items-center sm:gap-4">
+      <dt className="text-sm text-muted">{htmlFor ? <label htmlFor={htmlFor}>{label}</label> : label}</dt>
+      <dd className="min-w-0">{children}</dd>
+    </div>
+  );
+}
 
 function TaskDetails({ task, projects, today }: { task: Task; projects: Project[]; today: string }) {
   const router = useRouter();
   const safely = useSafeAction();
+  const announce = useAnnounce();
   const saved = useSavedNote();
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [dateOpen, setDateOpen] = useState(false);
@@ -78,168 +90,167 @@ function TaskDetails({ task, projects, today }: { task: Task; projects: Project[
   };
   const save = (updates: TaskUpdates) => run(() => updateTask(task.id, updates));
 
+  const status = archived
+    ? "Archived"
+    : completed && task.completedAt
+      ? `Completed · ${formatDateLabel(toDateKey(new Date(task.completedAt)), today)}`
+      : null;
+
   return (
     <article>
-      <Link href="/" className="-ml-2 mb-6 inline-flex min-h-11 items-center rounded-md px-2 text-sm text-muted hover:text-foreground">
-        ← Today
-      </Link>
-
-      <div className="mb-2 flex items-center justify-between gap-4 text-sm">
-        <span className="text-muted">
-          {archived ? "Archived" : completed ? "Completed" : "Active"}
-        </span>
-        <span aria-live="polite" className={`text-muted transition-opacity duration-150 ${saved.visible ? "opacity-100" : "opacity-0"}`}>
+      <div className="flex items-center justify-between">
+        <BackLink href="/" />
+        <span
+          aria-live="polite"
+          className={`mb-4 text-meta text-muted transition-opacity duration-300 md:mb-6 ${saved.visible ? "opacity-100" : "opacity-0"}`}
+        >
           {saved.visible ? "Saved" : ""}
         </span>
       </div>
 
-      <label htmlFor="task-title" className="sr-only">
-        Title
-      </label>
-      <AutosaveTextarea
-        id="task-title"
-        value={task.title}
-        singleLine
-        maxLength={TITLE_MAX_LENGTH}
-        onSave={(title) => {
-          const trimmed = title.trim();
-          if (!trimmed) return false; // empty title reverts
-          if (trimmed !== task.title) save({ title: trimmed });
-        }}
-        className={`field-sizing-content w-full resize-none rounded-md bg-transparent text-[28px] font-semibold leading-tight tracking-tight focus:bg-surface ${
-          completed ? "text-muted line-through" : ""
-        }`}
-      />
+      <header className="flex items-start gap-1">
+        <button
+          type="button"
+          role="checkbox"
+          aria-checked={completed}
+          aria-label={completed ? "Mark as not done" : "Complete task"}
+          disabled={archived}
+          onClick={() => {
+            run(() => (completed ? uncompleteTask(task.id) : completeTask(task.id)));
+            announce(completed ? "Marked as not done" : "Task completed");
+          }}
+          className="group/check -ml-3 flex size-11 shrink-0 items-center justify-center rounded-md disabled:opacity-40 md:mt-0.5"
+        >
+          <CheckCircle checked={completed} priority={task.priority} />
+        </button>
+        <div className="min-w-0 flex-1">
+          <label htmlFor="task-title" className="sr-only">
+            Title
+          </label>
+          <AutosaveTextarea
+            id="task-title"
+            value={task.title}
+            singleLine
+            maxLength={TITLE_MAX_LENGTH}
+            onSave={(title) => {
+              const trimmed = title.trim();
+              if (!trimmed) return false; // empty title reverts
+              if (trimmed !== task.title) save({ title: trimmed });
+            }}
+            className={`field-sizing-content -mx-1 w-full resize-none rounded-md bg-transparent px-1 py-0.5 text-page font-semibold transition-colors duration-150 hover:bg-subtle/70 focus:bg-surface ${
+              completed ? "text-muted line-through decoration-muted/50" : ""
+            }`}
+          />
+          {status && <p className="mt-1 text-sm text-muted">{status}</p>}
+        </div>
+      </header>
 
-      <div className="mt-6 flex flex-wrap gap-2">
-        {!archived && (
-          <Button
-            variant={completed ? "secondary" : "primary"}
-            onClick={() => run(() => (completed ? uncompleteTask(task.id) : completeTask(task.id)))}
-          >
-            {completed ? "Mark as not done" : "Complete"}
-          </Button>
-        )}
-        <Button onClick={() => run(() => (archived ? unarchiveTask(task.id) : archiveTask(task.id)))}>
-          {archived ? "Unarchive" : "Archive"}
-        </Button>
-        <Button variant="destructive" onClick={() => setConfirmDelete(true)}>
-          Delete
-        </Button>
-      </div>
-
-      <dl className="mt-10 grid gap-8">
-        <div>
-          <dt className={fieldLabel}>Due</dt>
-          <dd className="mt-2 flex flex-wrap items-center gap-2">
+      <dl className="mt-8 divide-y divide-border/70 border-y border-border/70">
+        <Property label="Due">
+          <div className="flex flex-wrap items-center gap-2">
             <Button size="sm" aria-expanded={dateOpen} onClick={() => setDateOpen((open) => !open)}>
-              {task.dueDate ? formatDateLabel(task.dueDate, today) : "No due date"}
+              <span className={task.dueDate && task.dueDate < today && !completed ? "text-danger" : ""}>
+                {task.dueDate ? formatDateLabel(task.dueDate, today) : "No due date"}
+              </span>
             </Button>
             {task.dueDate && (
-              <label className="flex items-center gap-2 text-sm text-muted">
+              <label className="flex items-center">
                 <span className="sr-only">Due time</span>
                 <input
                   type="time"
                   value={task.dueTime ?? ""}
                   onChange={(event) => save({ dueTime: event.target.value || undefined })}
-                  className="min-h-9 rounded-md border border-border bg-surface px-2 text-sm text-foreground"
+                  className={`${inputClasses} min-h-11 text-sm md:min-h-9`}
                 />
-                {task.dueTime && <span className="sr-only">{formatTime(task.dueTime)}</span>}
               </label>
             )}
-            {dateOpen && (
-              <div className="animate-enter w-full max-w-xs rounded-lg border border-border bg-surface p-1">
-                <DateShortcuts
-                  today={today}
-                  value={task.dueDate}
-                  onSelect={(dueDate) => {
-                    save({ dueDate });
-                    setDateOpen(false);
-                  }}
-                />
-              </div>
-            )}
-          </dd>
-        </div>
+          </div>
+          {dateOpen && (
+            <div className="animate-enter mt-2 w-full max-w-xs rounded-lg border border-border bg-surface p-1 shadow-popover">
+              <DateShortcuts
+                today={today}
+                value={task.dueDate}
+                onSelect={(dueDate) => {
+                  save({ dueDate });
+                  setDateOpen(false);
+                }}
+              />
+            </div>
+          )}
+        </Property>
 
-        <div>
-          <dt className={fieldLabel}>Priority</dt>
-          <dd className="mt-2 flex flex-wrap gap-2">
-            {[...TASK_PRIORITIES].reverse().map((priority) => (
-              <Button
-                key={priority}
-                size="sm"
-                aria-pressed={task.priority === priority}
-                onClick={() => save({ priority })}
-              >
-                {PRIORITY_LABELS[priority]}
-              </Button>
-            ))}
-          </dd>
-        </div>
+        <Property label="Priority">
+          <SegmentedControl
+            label="Priority"
+            value={task.priority}
+            onChange={(priority) => save({ priority })}
+            options={[...TASK_PRIORITIES].map((priority) => ({
+              value: priority,
+              label: priority === "none" ? "None" : PRIORITY_LABELS[priority],
+            }))}
+          />
+        </Property>
 
-        <div>
-          <dt className={fieldLabel}>
-            <label htmlFor="task-project">Project</label>
-          </dt>
-          <dd className="mt-2">
-            {projects.length === 0 ? (
-              <p className="text-sm text-muted">
-                No projects yet.{" "}
-                <Link href="/projects" className="text-accent underline-offset-2 hover:underline">
-                  Create a project
-                </Link>{" "}
-                to group related tasks.
-              </p>
-            ) : (
-              <select
-                id="task-project"
-                value={task.projectId ?? ""}
-                onChange={(event) => save({ projectId: event.target.value || undefined })}
-                className="min-h-11 w-full max-w-xs rounded-md border border-border bg-surface px-3 text-sm"
-              >
-                <option value="">No project</option>
-                {projects.map((project) => (
-                  <option key={project.id} value={project.id}>
-                    {project.name}
-                  </option>
-                ))}
-              </select>
-            )}
-          </dd>
-        </div>
+        <Property label="Project" htmlFor={projects.length ? "task-project" : undefined}>
+          {projects.length === 0 ? (
+            <p className="text-sm text-muted">
+              No projects yet.{" "}
+              <Link href="/projects" className="text-accent underline-offset-2 hover:underline">
+                Create one
+              </Link>
+            </p>
+          ) : (
+            <select
+              id="task-project"
+              value={task.projectId ?? ""}
+              onChange={(event) => save({ projectId: event.target.value || undefined })}
+              className={`${inputClasses} min-h-11 w-full max-w-xs text-sm md:min-h-9`}
+            >
+              <option value="">No project</option>
+              {projects.map((project) => (
+                <option key={project.id} value={project.id}>
+                  {project.name}
+                </option>
+              ))}
+            </select>
+          )}
+        </Property>
 
-        <div>
-          <dt className={fieldLabel}>Tags</dt>
-          <dd className="mt-2">
-            <TagEditor tags={task.tags} onChange={(tags) => save({ tags })} />
-          </dd>
-        </div>
-
-        <div>
-          <dt className={fieldLabel}>
-            <label htmlFor="task-notes">Notes</label>
-          </dt>
-          <dd className="mt-2">
-            <AutosaveTextarea
-              id="task-notes"
-              value={task.notes ?? ""}
-              placeholder="Add context that doesn't belong in the title"
-              onSave={(notes) => {
-                if ((notes || undefined) !== task.notes) save({ notes });
-              }}
-              className="field-sizing-content min-h-24 w-full resize-none rounded-md border border-border bg-surface px-3 py-2 text-[15px] leading-relaxed placeholder:text-muted"
-            />
-          </dd>
-        </div>
-
-        <div>
-          <dt className={fieldLabel}>Subtasks</dt>
-          <dd className="mt-2">
-            <SubtaskEditor task={task} run={run} />
-          </dd>
-        </div>
+        <Property label="Tags">
+          <TagEditor tags={task.tags} onChange={(tags) => save({ tags })} />
+        </Property>
       </dl>
+
+      <section className="mt-10">
+        <GroupLabel>
+          <label htmlFor="task-notes">Notes</label>
+        </GroupLabel>
+        <AutosaveTextarea
+          id="task-notes"
+          value={task.notes ?? ""}
+          placeholder="Add context that doesn't belong in the title"
+          onSave={(notes) => {
+            if ((notes || undefined) !== task.notes) save({ notes });
+          }}
+          className={`${inputClasses} field-sizing-content mt-2 min-h-28 w-full resize-none py-2.5 leading-relaxed`}
+        />
+      </section>
+
+      <section className="mt-10">
+        <GroupLabel>Subtasks</GroupLabel>
+        <div className="mt-2">
+          <SubtaskEditor task={task} run={run} />
+        </div>
+      </section>
+
+      <footer className="mt-12 flex flex-wrap gap-2 border-t border-border pt-6">
+        <Button variant="ghost" size="sm" onClick={() => run(() => (archived ? unarchiveTask(task.id) : archiveTask(task.id)))}>
+          {archived ? "Unarchive" : "Archive"}
+        </Button>
+        <Button variant="ghost-destructive" size="sm" onClick={() => setConfirmDelete(true)}>
+          Delete
+        </Button>
+      </footer>
 
       <ConfirmDialog
         open={confirmDelete}
@@ -316,7 +327,7 @@ function TagEditor({ tags, onChange }: { tags: string[]; onChange: (tags: string
             type="button"
             aria-label={`Remove tag ${tag}`}
             onClick={() => onChange(tags.filter((t) => t !== tag))}
-            className="flex size-8 items-center justify-center rounded-full hover:text-foreground"
+            className="flex size-8 items-center justify-center rounded-full transition-colors duration-150 hover:bg-border/60 hover:text-foreground"
           >
             ×
           </button>
@@ -350,7 +361,7 @@ function SubtaskEditor({ task, run }: { task: Task; run: (action: () => unknown)
   return (
     <div>
       {task.subtasks.length > 0 && (
-        <p className="mb-2 text-sm text-muted">
+        <p className="mb-1 text-meta text-muted">
           {done} of {task.subtasks.length} done
         </p>
       )}
@@ -363,13 +374,9 @@ function SubtaskEditor({ task, run }: { task: Task; run: (action: () => unknown)
               aria-checked={subtask.completed}
               aria-label={subtask.completed ? `Mark “${subtask.title}” as not done` : `Complete “${subtask.title}”`}
               onClick={() => run(() => updateSubtask(task.id, subtask.id, { completed: !subtask.completed }))}
-              className="-ml-3 flex size-11 shrink-0 items-center justify-center"
+              className="group/check -ml-3 flex size-11 shrink-0 items-center justify-center"
             >
-              <span
-                className={`size-4 rounded-full border-[1.5px] transition-colors duration-150 ${
-                  subtask.completed ? "border-success bg-success" : "border-muted/60"
-                }`}
-              />
+              <CheckCircle checked={subtask.completed} size="sm" />
             </button>
             <label className="sr-only" htmlFor={`subtask-${subtask.id}`}>
               Subtask title
@@ -384,7 +391,7 @@ function SubtaskEditor({ task, run }: { task: Task; run: (action: () => unknown)
                 if (!title) event.target.value = subtask.title;
                 else if (title !== subtask.title) run(() => updateSubtask(task.id, subtask.id, { title }));
               }}
-              className={`min-h-9 min-w-0 flex-1 rounded-sm bg-transparent px-1 text-[15px] focus:bg-surface ${
+              className={`min-h-9 min-w-0 flex-1 rounded-sm bg-transparent px-1 text-body focus:bg-surface ${
                 subtask.completed ? "text-muted line-through" : ""
               }`}
             />
@@ -417,7 +424,7 @@ function SubtaskEditor({ task, run }: { task: Task; run: (action: () => unknown)
           onChange={(event) => setDraft(event.target.value)}
           maxLength={TITLE_MAX_LENGTH}
           placeholder="+ Add subtask"
-          className="min-h-11 min-w-0 flex-1 rounded-md border border-transparent bg-transparent px-2 text-[15px] placeholder:text-muted hover:border-border focus:border-border focus:bg-surface"
+          className="-ml-1 min-h-11 min-w-0 flex-1 rounded-md border border-transparent bg-transparent px-2 text-body placeholder:text-muted hover:border-border focus:border-border focus:bg-surface"
         />
       </form>
     </div>

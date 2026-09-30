@@ -6,10 +6,17 @@ import { StorageError } from "@/lib/storage/local-storage";
 type Notify = (message: string) => void;
 
 const NoticeContext = createContext<Notify>(() => {});
+const AnnounceContext = createContext<Notify>(() => {});
+
+/** Announces a message to screen readers without showing anything. */
+export function useAnnounce() {
+  return useContext(AnnounceContext);
+}
 
 /** A single calm, polite status message at the bottom of the screen. */
 export function NoticeProvider({ children }: { children: React.ReactNode }) {
   const [message, setMessage] = useState<string | null>(null);
+  const [announcement, setAnnouncement] = useState("");
   const timer = useRef<ReturnType<typeof setTimeout>>(undefined);
 
   const notify = useCallback<Notify>((text) => {
@@ -20,20 +27,31 @@ export function NoticeProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => () => clearTimeout(timer.current), []);
 
+  const announce = useCallback<Notify>((text) => {
+    // Clearing first makes repeated identical messages announce again.
+    setAnnouncement("");
+    requestAnimationFrame(() => setAnnouncement(text));
+  }, []);
+
   return (
     <NoticeContext.Provider value={notify}>
-      {children}
-      <div
-        role="status"
-        aria-live="polite"
-        className="pointer-events-none fixed inset-x-0 bottom-20 z-40 flex justify-center px-4 md:bottom-6"
-      >
-        {message && (
-          <p className="animate-enter pointer-events-auto rounded-md bg-foreground px-4 py-3 text-sm text-surface shadow-popover">
-            {message}
-          </p>
-        )}
-      </div>
+      <AnnounceContext.Provider value={announce}>
+        {children}
+        <p role="status" aria-live="polite" className="sr-only">
+          {announcement}
+        </p>
+        <div
+          role="status"
+          aria-live="polite"
+          className="pointer-events-none fixed inset-x-0 bottom-20 z-40 flex justify-center px-4 md:bottom-6"
+        >
+          {message && (
+            <p className="animate-enter pointer-events-auto rounded-md bg-foreground px-4 py-3 text-sm text-surface shadow-popover">
+              {message}
+            </p>
+          )}
+        </div>
+      </AnnounceContext.Provider>
     </NoticeContext.Provider>
   );
 }

@@ -1,7 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { addDays, nextWeek, thisWeekend } from "@/lib/utils/dates";
+import { menuItemClasses } from "@/components/ui/styles";
+import { addDays, formatDateLabel, nextWeek, thisWeekend } from "@/lib/utils/dates";
 
 export function dateShortcuts(today: string) {
   return [
@@ -23,8 +24,7 @@ export function DateShortcuts({
   onSelect: (date: string | undefined) => void;
 }) {
   const [customDate, setCustomDate] = useState(value ?? "");
-  const item =
-    "flex min-h-11 w-full items-center justify-between rounded-sm px-3 text-left text-sm hover:bg-subtle md:min-h-9";
+  const item = `${menuItemClasses} justify-between`;
   return (
     <div className="flex flex-col">
       {dateShortcuts(today).map((shortcut) => (
@@ -35,6 +35,9 @@ export function DateShortcuts({
           onClick={() => onSelect(shortcut.date)}
         >
           {shortcut.label}
+          <span className="text-meta text-muted">
+            {formatDateLabel(shortcut.date, today) === shortcut.label ? "" : formatDateLabel(shortcut.date, today)}
+          </span>
         </button>
       ))}
       <form

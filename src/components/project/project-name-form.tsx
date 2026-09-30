@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { useSafeAction } from "@/components/ui/notice";
+import { inputClasses } from "@/components/ui/styles";
 import { ProjectValidationError } from "@/lib/projects/project-service";
 
 const MESSAGES: Record<ProjectValidationError["reason"], string> = {
@@ -51,7 +52,7 @@ export function ProjectNameForm({
         <input
           id={id}
           value={name}
-          autoFocus={!!onCancel}
+          autoFocus
           onChange={(event) => {
             setName(event.target.value);
             setError(null);
@@ -59,14 +60,14 @@ export function ProjectNameForm({
           placeholder="Project name"
           aria-invalid={error ? true : undefined}
           aria-describedby={`${id}-error`}
-          className="min-h-11 min-w-0 flex-1 rounded-md border border-border bg-surface px-3 text-[15px] placeholder:text-muted"
+          className={`${inputClasses} min-h-11 min-w-0 flex-1`}
         />
         <Button type="submit" variant="primary">
           {submitLabel}
         </Button>
         {onCancel && <Button onClick={onCancel}>Cancel</Button>}
       </div>
-      <p id={`${id}-error`} aria-live="polite" className="mt-2 min-h-5 text-[13px] text-danger">
+      <p id={`${id}-error`} aria-live="polite" className="mt-2 text-meta text-danger empty:hidden">
         {error}
       </p>
     </form>
