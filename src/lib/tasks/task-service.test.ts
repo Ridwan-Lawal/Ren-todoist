@@ -98,6 +98,16 @@ describe("acting on a task", () => {
     expect(getTasks()).toHaveLength(1);
   });
 
+  it("restores a completed task as completed when unarchived", () => {
+    const { id } = createTask({ title: "Shipped" });
+    const { completedAt } = completeTask(id);
+
+    archiveTask(id);
+    const restored = unarchiveTask(id);
+
+    expect(restored).toMatchObject({ status: "completed", completedAt });
+  });
+
   it("deletes a task permanently", () => {
     const keep = createTask({ title: "Keep" });
     const remove = createTask({ title: "Remove" });

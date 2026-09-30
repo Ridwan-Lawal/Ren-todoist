@@ -96,22 +96,15 @@ function TaskDetails({ task, projects, today }: { task: Task; projects: Project[
       <label htmlFor="task-title" className="sr-only">
         Title
       </label>
-      <textarea
+      <AutosaveTextarea
         id="task-title"
-        key={`title-${task.updatedAt}`}
-        defaultValue={task.title}
-        rows={1}
+        value={task.title}
+        singleLine
         maxLength={TITLE_MAX_LENGTH}
-        onKeyDown={(event) => {
-          if (event.key === "Enter") {
-            event.preventDefault();
-            event.currentTarget.blur();
-          }
-        }}
-        onBlur={(event) => {
-          const title = event.target.value.trim();
-          if (!title) event.target.value = task.title;
-          else if (title !== task.title) save({ title });
+        onSave={(title) => {
+          const trimmed = title.trim();
+          if (!trimmed) return false; // empty title reverts
+          if (trimmed !== task.title) save({ title: trimmed });
         }}
         className={`field-sizing-content w-full resize-none rounded-md bg-transparent text-[28px] font-semibold leading-tight tracking-tight focus:bg-surface ${
           completed ? "text-muted line-through" : ""
@@ -228,13 +221,12 @@ function TaskDetails({ task, projects, today }: { task: Task; projects: Project[
             <label htmlFor="task-notes">Notes</label>
           </dt>
           <dd className="mt-2">
-            <textarea
+            <AutosaveTextarea
               id="task-notes"
-              key={`notes-${task.updatedAt}`}
-              defaultValue={task.notes ?? ""}
+              value={task.notes ?? ""}
               placeholder="Add context that doesn't belong in the title"
-              onBlur={(event) => {
-                if ((event.target.value || undefined) !== task.notes) save({ notes: event.target.value });
+              onSave={(notes) => {
+                if ((notes || undefined) !== task.notes) save({ notes });
               }}
               className="field-sizing-content min-h-24 w-full resize-none rounded-md border border-border bg-surface px-3 py-2 text-[15px] leading-relaxed placeholder:text-muted"
             />
@@ -261,6 +253,49 @@ function TaskDetails({ task, projects, today }: { task: Task; projects: Project[
         }}
       />
     </article>
+  );
+}
+
+/**
+ * A textarea that saves on blur. While focused, the user's draft is never
+ * replaced; when not focused, it follows the stored value (e.g. another tab).
+ * `onSave` returning false reverts the draft to the stored value.
+ */
+function AutosaveTextarea({
+  value,
+  onSave,
+  singleLine,
+  ...props
+}: Omit<React.ComponentProps<"textarea">, "value" | "onChange" | "onBlur"> & {
+  value: string;
+  onSave: (draft: string) => boolean | void;
+  singleLine?: boolean;
+}) {
+  const [draft, setDraft] = useState(value);
+  const [focused, setFocused] = useState(false);
+  const shown = focused ? draft : value;
+
+  return (
+    <textarea
+      {...props}
+      rows={singleLine ? 1 : props.rows}
+      value={shown}
+      onFocus={() => {
+        setDraft(value);
+        setFocused(true);
+      }}
+      onChange={(event) => setDraft(singleLine ? event.target.value.replace(/\n/g, " ") : event.target.value)}
+      onKeyDown={(event) => {
+        if (singleLine && event.key === "Enter") {
+          event.preventDefault();
+          event.currentTarget.blur();
+        }
+      }}
+      onBlur={() => {
+        setFocused(false);
+        onSave(draft);
+      }}
+    />
   );
 }
 

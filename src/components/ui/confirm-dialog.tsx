@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useId, useRef } from "react";
 import { Button } from "./button";
 
 type ConfirmDialogProps = {
@@ -16,6 +16,7 @@ type ConfirmDialogProps = {
 export function ConfirmDialog({ open, title, description, confirmLabel, onConfirm, onCancel }: ConfirmDialogProps) {
   const ref = useRef<HTMLDialogElement>(null);
   const confirmRef = useRef<HTMLButtonElement>(null);
+  const titleId = useId();
 
   useEffect(() => {
     const dialog = ref.current;
@@ -35,19 +36,22 @@ export function ConfirmDialog({ open, title, description, confirmLabel, onConfir
         event.preventDefault();
         onCancel();
       }}
+      // The dialog has no padding, so a click whose target is the dialog itself is on the backdrop.
       onClick={(event) => event.target === ref.current && onCancel()}
-      aria-labelledby="confirm-dialog-title"
-      className="m-auto w-[calc(100%-2rem)] max-w-sm rounded-lg border border-border bg-surface p-6 text-foreground shadow-popover open:animate-enter"
+      aria-labelledby={titleId}
+      className="m-auto w-[calc(100%-2rem)] max-w-sm rounded-lg border border-border bg-surface p-0 text-foreground shadow-popover open:animate-enter"
     >
-      <h2 id="confirm-dialog-title" className="text-lg font-semibold">
-        {title}
-      </h2>
-      <p className="mt-2 text-sm text-muted">{description}</p>
-      <div className="mt-6 flex justify-end gap-2">
-        <Button onClick={onCancel}>Cancel</Button>
-        <Button ref={confirmRef} variant="destructive" onClick={onConfirm}>
-          {confirmLabel}
-        </Button>
+      <div className="p-6">
+        <h2 id={titleId} className="text-lg font-semibold">
+          {title}
+        </h2>
+        <p className="mt-2 text-sm text-muted">{description}</p>
+        <div className="mt-6 flex justify-end gap-2">
+          <Button onClick={onCancel}>Cancel</Button>
+          <Button ref={confirmRef} variant="destructive" onClick={onConfirm}>
+            {confirmLabel}
+          </Button>
+        </div>
       </div>
     </dialog>
   );

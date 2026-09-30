@@ -87,12 +87,13 @@ export function rescheduleTask(id: string, dueDate: string | undefined): Task {
   return updateTask(id, { dueDate });
 }
 
+/** Archiving keeps `completedAt`, so unarchiving restores whether the task was done. */
 export function archiveTask(id: string): Task {
-  return modifyTask(id, (task) => ({ ...task, status: "archived", completedAt: undefined }));
+  return modifyTask(id, (task) => ({ ...task, status: "archived" }));
 }
 
 export function unarchiveTask(id: string): Task {
-  return modifyTask(id, (task) => ({ ...task, status: "active" }));
+  return modifyTask(id, (task) => ({ ...task, status: task.completedAt ? "completed" : "active" }));
 }
 
 export function deleteTask(id: string): void {
