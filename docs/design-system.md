@@ -54,11 +54,17 @@ Use semantic color tokens rather than hardcoded colors throughout components.
 
 ## Semantic Colors
 
-| Token     | Purpose                                  |
-| --------- | ---------------------------------------- |
-| `success` | Successful completion and positive state |
-| `warning` | Warnings and medium-priority information |
-| `danger`  | Destructive actions and errors           |
+| Token     | Value     | Purpose                                  |
+| --------- | --------- | ---------------------------------------- |
+| `success` | `#2F7D4F` | Successful completion and positive state |
+| `warning` | `#A86A12` | Warnings and medium-priority information |
+| `danger`  | `#C23B32` | Destructive actions and errors           |
+
+Verify WCAG AA contrast for these values against `background` and `surface` when the tokens are implemented.
+
+## Theme
+
+V1 ships a **light theme only**. There is no dark mode until a dark palette is designed.
 
 Semantic colors should be used sparingly.
 
@@ -113,7 +119,7 @@ Do not use light gray text for important information.
 
 Primary typeface:
 
-**Inter**
+**Inter**, loaded with `next/font`.
 
 Use one primary typeface throughout the application unless there is a strong product reason to introduce another.
 
@@ -354,7 +360,12 @@ The checkbox is the primary completion action.
 
 Clicking the task content should open task details.
 
-Secondary actions should remain hidden until needed.
+Secondary actions live in a `⋯` menu:
+
+- Desktop — the `⋯` button appears when the row is hovered or focused.
+- Mobile — the `⋯` button is always visible at a subtle weight, with a 44px touch target. Do not rely on long-press.
+
+When a task has subtasks, its metadata shows quiet progress, for example `2/3`.
 
 Avoid turning every task into a large decorative card.
 

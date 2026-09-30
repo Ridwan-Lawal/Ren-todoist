@@ -155,7 +155,11 @@ The application has a single source of truth for task and project types.
 
 # Phase 4 — Local Storage Layer
 
+Before this phase, add **Vitest** so the storage layer, services, and parser are tested as they are built.
+
 Implement the persistence abstraction.
+
+Validate loaded data with **Zod**. Follow the recovery and multi-tab rules in `architecture.md` section 10.
 
 Example responsibilities:
 
@@ -347,7 +351,7 @@ title: Finish the portfolio
 dueDate: tomorrow
 ```
 
-However, the basic task creation flow must work even without AI parsing.
+However, the basic task creation flow must work before any parsing exists.
 
 ### Deliverable
 
@@ -523,7 +527,7 @@ Users can find tasks even when they are not on Today.
 
 Add structured parsing to Quick Capture.
 
-Start with deterministic parsing where practical.
+V1 parsing is deterministic only. The supported syntax, parse preview, and unmatched `@project` rule are defined in `screen-spec.md` section 7.
 
 Examples:
 
@@ -548,46 +552,19 @@ type ParsedTaskInput = {
   dueTime?: string;
   priority?: TaskPriority;
   projectName?: string;
+  tags?: string[];
 };
 ```
 
 ---
 
-# Phase 16 — AI Parsing
+# Phase 16 — AI Parsing (Deferred to V2)
 
-Only introduce AI after normal task creation and deterministic parsing work.
+AI-assisted parsing is not part of V1.
 
-AI should enhance Quick Capture rather than become a dependency.
+V1 ships with deterministic parsing only (Phase 15).
 
-Flow:
-
-```text
-User input
-     ↓
-Parser
-     ↓
-AI interpretation if useful
-     ↓
-Schema validation
-     ↓
-Parsed task
-     ↓
-Task service
-     ↓
-Local Storage
-```
-
-If AI fails:
-
-```text
-Original input
-     ↓
-Normal task title
-     ↓
-Task created
-```
-
-The user must never lose their task because the AI parser failed.
+When AI parsing is introduced in V2, follow `architecture.md` sections 16–17: AI output is validated before use, and the user must never lose their task because the AI parser failed.
 
 ---
 
@@ -611,7 +588,6 @@ Check:
 - invalid stored data
 - storage failure
 - parser failure
-- AI failure
 
 Do not wait until the end to discover these states.
 
@@ -735,8 +711,9 @@ Test the core product behaviors.
 - date input
 - time input
 - priority input
+- tag and project input
+- ignored parse (preview `×`)
 - parser failure
-- AI failure
 
 ---
 
@@ -801,7 +778,7 @@ V1 is complete when:
 - [ ] empty states work
 - [ ] error states work
 - [ ] parser works
-- [ ] AI failure does not block task creation
+- [ ] parser failure does not block task creation
 - [ ] keyboard interactions work
 - [ ] accessibility pass completed
 - [ ] no unnecessary dependencies were introduced
@@ -849,7 +826,7 @@ The recommended order is:
         ↓
 16. Deterministic Parser
         ↓
-17. AI Parser
+17. AI Parser (deferred to V2)
         ↓
 18. Edge States
         ↓

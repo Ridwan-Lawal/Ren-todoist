@@ -28,13 +28,15 @@ Projects
 All Tasks
 ```
 
+Use a slim left sidebar.
+
 The navigation should remain visually simple.
 
 The current route should have a clear active state.
 
 ## Mobile
 
-Use a compact navigation pattern that provides access to:
+Use a fixed bottom tab bar that provides access to:
 
 ```text
 Today
@@ -148,6 +150,8 @@ The application should:
 
 The capture interaction should not open a separate page.
 
+Titles are capped at 500 characters. Longer detail belongs in notes.
+
 ---
 
 # 6. Quick Capture States
@@ -208,11 +212,57 @@ Interpretation should be transparent and reversible.
 
 If the parser is uncertain, prefer preserving the user's original text rather than making a potentially incorrect assumption.
 
+V1 uses deterministic parsing only. AI-assisted parsing is deferred to V2.
+
+## Supported Syntax
+
+Recognized **only at the end** of the input, so titles like "Call Monday Group" stay intact:
+
+| Input                           | Meaning                                                |
+| ------------------------------- | ------------------------------------------------------ |
+| `today`, `tomorrow`             | That date                                              |
+| `mon` … `sun`, `monday` … `sunday` | Next occurrence; the current weekday means today    |
+| `next week`                     | Next Monday                                            |
+| `this weekend`                  | The coming Saturday                                    |
+| `at 3pm`, `3:30pm`, `15:00`     | Due time                                               |
+
+Recognized **anywhere** in the input:
+
+| Input                                    | Meaning                                                                          |
+| ---------------------------------------- | -------------------------------------------------------------------------------- |
+| `!high`, `!med`, `!low` / `!1`, `!2`, `!3` | Priority                                                                       |
+| `#tag`                                   | Tag                                                                              |
+| `@project`                               | Existing project, matched case-insensitively. If none matches, the text stays in the title. |
+
+Anything else stays in the title. Relative phrases like `in 3 days`, absolute dates like `Oct 12`, and recurrence are not supported in V1.
+
+## Parse Preview
+
+While the user types, a quiet line under Quick Capture shows what was recognized, for example:
+
+```text
+Fri · 3:00 PM · #work
+```
+
+The preview has a `×` control. Selecting it ignores parsing for this capture, and the raw text becomes the title.
+
+Escape does not dismiss the preview; it keeps its existing meaning.
+
 ---
 
 # 8. Today's Task List
 
 The task list displays tasks relevant to today.
+
+The list contains active tasks in three groups, in this order:
+
+1. Overdue — marked with a subtle "Overdue" label.
+2. Due today.
+3. Undated.
+
+Within each group, tasks are sorted by priority (high first), then due time, then creation time (oldest first). There is no manual reordering in V1.
+
+The list is recalculated when the tab becomes visible again and at local midnight.
 
 Each task should show only the information necessary for quick scanning.
 
@@ -242,6 +292,8 @@ Clicking the checkbox:
 3. Updates the UI immediately.
 4. Provides subtle completion feedback.
 
+Clicking the checkbox of a completed task marks it active again.
+
 ### Task Content
 
 Clicking the task content opens Task Details.
@@ -261,11 +313,15 @@ Delete
 
 Do not expose all of these actions directly on the task item.
 
+Reschedule uses the same date shortcuts as Task Details (section 19).
+
 ---
 
 # 10. Completed Tasks
 
 Completed tasks should remain visible long enough for the user to understand the result.
+
+The Completed section shows tasks completed today. It is collapsed by default and shows its count.
 
 Example:
 
@@ -288,7 +344,9 @@ Do not make completed tasks visually identical to active tasks.
 
 # 11. Upcoming Tasks
 
-The Today screen can show a lightweight upcoming section below today's work.
+The Today screen shows a lightweight upcoming section below today's work.
+
+It covers active tasks due in the next 7 days, grouped by day.
 
 Example:
 
@@ -355,6 +413,8 @@ Do not expose raw storage errors to the user.
 
 Task Details allows the user to organize and modify an individual task.
 
+It is a full page at `/tasks/[id]` on every screen size.
+
 It answers:
 
 > How is this task organized?
@@ -411,7 +471,13 @@ The title should be editable.
 
 Changes should be validated before saving.
 
-The user should have a clear indication of whether changes have been saved where necessary.
+Task Details autosaves:
+
+- Text fields save when they lose focus.
+- Pickers save immediately.
+- A quiet "Saved" note confirms the change.
+
+An empty title is not saved; the previous title is restored.
 
 ---
 
@@ -454,7 +520,7 @@ Medium
 High
 ```
 
-Changing priority should update the task immediately or through a clear save interaction.
+Changing priority should update the task immediately.
 
 ---
 
@@ -513,11 +579,13 @@ Task Details should support:
 ```text
 Complete
 Reschedule
-Archive
+Archive / Unarchive
 Delete
 ```
 
-Destructive actions should require confirmation when accidental deletion is reasonably possible.
+Delete opens a confirmation dialog. Enter confirms and Escape cancels.
+
+Archiving is not deletion. Archived tasks can be found in All Tasks and unarchived here.
 
 ---
 
@@ -573,6 +641,8 @@ Learning
 
 Each project should show enough information to understand its contents without creating unnecessary visual complexity.
 
+Task counts include active tasks only.
+
 ---
 
 # 28. Project Creation
@@ -586,6 +656,12 @@ Project name
 ```
 
 Optional project details should not be introduced unless they serve a clear purpose.
+
+Project names must be unique, ignoring case. A conflict shows an inline message:
+
+```text
+A project with this name already exists.
+```
 
 ---
 
@@ -613,11 +689,15 @@ The user should be able to:
 - Open task details
 - Filter/sort tasks where useful
 
+Adding a task uses the same Quick Capture component, pre-assigned to the project.
+
 ---
 
 # 30. All Tasks
 
-All Tasks provides a complete view of the user's task system.
+All Tasks provides a complete view of the user's task system at `/tasks`.
+
+The status filter covers Active, Completed, and Archived.
 
 Possible filters:
 
@@ -667,6 +747,8 @@ No tasks in this project.
 
 [ Add task ]
 ```
+
+"Add task" moves focus to the project's Quick Capture.
 
 ---
 
@@ -814,8 +896,8 @@ The implementation must account for:
 - No tags
 - No due date
 - No priority
-- AI parsing success
-- AI parsing failure
+- Parsing success
+- Parsing ignored or failed
 - Task not found
 - Mobile layout
 - Desktop layout

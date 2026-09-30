@@ -44,7 +44,7 @@ These documents are the project's source of truth.
 ### Product
 
 ```text
-@product-brief.md
+@docs/product-brief.md
 ```
 
 Defines:
@@ -60,7 +60,7 @@ Defines:
 ### Design
 
 ```text
-@design-system.md
+@docs/design-system.md
 ```
 
 Defines:
@@ -78,7 +78,7 @@ Defines:
 ### Screens & UX
 
 ```text
-@screen-spec.md
+@docs/screen-spec.md
 ```
 
 Defines:
@@ -95,7 +95,7 @@ Defines:
 ### Architecture
 
 ```text
-@architecture.md
+@docs/architecture.md
 ```
 
 Defines:
@@ -114,7 +114,7 @@ Defines:
 ### AI Development Rules
 
 ```text
-@ai-rules.md
+@docs/ai-rules.md
 ```
 
 Defines:
@@ -131,7 +131,7 @@ Defines:
 ### Implementation Plan
 
 ```text
-@implementation-plan.md
+@docs/implementation-plan.md
 ```
 
 Defines:
@@ -149,12 +149,12 @@ Use the documentation above rather than inventing new product or technical decis
 
 When working on a task:
 
-- Product question → `@product-brief.md`
-- Design question → `@design-system.md`
-- Screen/UX question → `@screen-spec.md`
-- Architecture question → `@architecture.md`
-- AI/code-agent behavior → `@ai-rules.md`
-- Implementation order → `@implementation-plan.md`
+- Product question → `@docs/product-brief.md`
+- Design question → `@docs/design-system.md`
+- Screen/UX question → `@docs/screen-spec.md`
+- Architecture question → `@docs/architecture.md`
+- AI/code-agent behavior → `@docs/ai-rules.md`
+- Implementation order → `@docs/implementation-plan.md`
 
 If a decision is already documented, follow it.
 
@@ -244,7 +244,7 @@ inside UI components.
 Use the persistence layer defined in:
 
 ```text
-@architecture.md
+@docs/architecture.md
 ```
 
 Task business logic belongs in the task service.
@@ -285,7 +285,7 @@ Do not add these features unless explicitly instructed.
 Follow:
 
 ```text
-@design-system.md
+@docs/design-system.md
 ```
 
 The visual direction is:
@@ -319,7 +319,7 @@ Do not make something visually complex simply because it is easy for an AI codin
 Follow:
 
 ```text
-@product-brief.md
+@docs/product-brief.md
 ```
 
 The primary interaction is Quick Capture.
@@ -342,7 +342,7 @@ No required fields should block basic task creation.
 Follow:
 
 ```text
-@screen-spec.md
+@docs/screen-spec.md
 ```
 
 Do not invent alternative screen structures when the screen specification already defines the behavior.
@@ -358,7 +358,6 @@ All relevant states should be implemented:
 - missing metadata
 - storage failure
 - parser failure
-- AI failure
 
 ---
 
@@ -367,14 +366,16 @@ All relevant states should be implemented:
 Follow:
 
 ```text
-@ai-rules.md
+@docs/ai-rules.md
 ```
+
+V1 parses Quick Capture input deterministically. AI-assisted parsing is deferred to V2 and must not be added to V1 unless explicitly instructed.
 
 AI is an enhancement, not the product.
 
 The application must remain useful without AI.
 
-AI may interpret natural-language task input.
+In V2, AI may interpret natural-language task input.
 
 AI must not:
 
@@ -397,7 +398,7 @@ If AI parsing fails, the original user input must still be capable of becoming a
 Follow:
 
 ```text
-@implementation-plan.md
+@docs/implementation-plan.md
 ```
 
 Do not skip ahead unnecessarily.

@@ -62,15 +62,21 @@ V1 uses:
 
 No database is required.
 
-## AI
+## Parsing
 
-AI is optional within the task-capture pipeline and should be isolated behind a parser interface.
+V1 uses deterministic parsing only, behind a parser interface.
+
+AI-assisted parsing is deferred to V2 and will sit behind the same interface.
 
 ## Validation
 
 Use TypeScript for compile-time type safety.
 
-Use schema validation where runtime validation is required, particularly for AI-generated structured data.
+Use **Zod** for runtime validation of data read from Local Storage (and, in V2, AI-generated structured data).
+
+## Testing
+
+Use **Vitest** for unit tests of the storage layer, services, and parser.
 
 ---
 
@@ -115,8 +121,9 @@ src/
 │   ├── projects/
 │   │   └── page.tsx
 │   └── tasks/
+│       ├── page.tsx          # All Tasks
 │       └── [id]/
-│           └── page.tsx
+│           └── page.tsx      # Task Details
 │
 ├── components/
 │   ├── ui/
@@ -192,6 +199,14 @@ type Subtask = {
 };
 ```
 
+Field rules:
+
+- `title` is trimmed, must not be empty, and is capped at 500 characters. `notes` has no cap.
+- `dueDate` is a local calendar date in `YYYY-MM-DD` format.
+- `dueTime` is a 24-hour time in `HH:mm` format.
+- `tags` are stored lowercase, trimmed, without the leading `#`, without duplicates, and contain only `a-z`, `0-9`, `-` and `_`.
+- Completing all subtasks does **not** complete the parent task.
+
 ---
 
 # 6. Project Model
@@ -206,6 +221,8 @@ type Project = {
   updatedAt: string;
 };
 ```
+
+Project names are unique, compared case-insensitively after trimming.
 
 Tasks reference projects through:
 
@@ -238,6 +255,8 @@ const STORAGE_KEYS = {
   projects: "todo-app:projects",
 };
 ```
+
+Backups of unreadable data (see section 10) use the same keys with a `:backup` suffix.
 
 Only the storage layer should directly call:
 
@@ -308,6 +327,18 @@ The application should account for:
 A malformed stored value should not cause the entire application to crash.
 
 If stored data cannot be safely recovered, the application should fail gracefully and communicate the problem appropriately.
+
+Recovery behavior:
+
+1. Show "We couldn't load your tasks" with **Try again**.
+2. Never overwrite unreadable data automatically.
+3. Offer **Start fresh**, which first copies the unreadable value to the `:backup` key and then resets to an empty collection.
+
+## Multiple Tabs
+
+The storage layer listens for the browser `storage` event and notifies subscribers when another tab changes the data.
+
+This prevents an older tab from overwriting newer data.
 
 ---
 
@@ -405,6 +436,7 @@ type ParsedTaskInput = {
   dueTime?: string;
   priority?: TaskPriority;
   projectName?: string;
+  tags?: string[];
 };
 ```
 
@@ -434,7 +466,9 @@ AI should be introduced where it provides meaningful additional interpretation r
 
 ---
 
-# 16. AI Parsing
+# 16. AI Parsing (V2)
+
+AI parsing is deferred to V2. The rules in sections 16 and 17 apply when it is introduced.
 
 If an AI model is used, its output must be structured.
 
@@ -455,7 +489,7 @@ AI output should never be blindly trusted.
 
 ---
 
-# 17. AI Validation
+# 17. AI Validation (V2)
 
 The flow should be:
 
@@ -537,6 +571,18 @@ Today
 
 This avoids multiple sources of truth.
 
+## Today, Upcoming, and Completed
+
+Given the current local date:
+
+- **Today** — active tasks that are overdue, due today, or undated, grouped in that order.
+- **Upcoming** — active tasks due in the next 7 days (excluding today), grouped by day.
+- **Completed** — tasks whose `completedAt` falls on the current local date.
+
+Within each Today group, tasks are sorted by priority (high first), then due time, then `createdAt` (oldest first).
+
+The current date is re-evaluated when the tab becomes visible again and at local midnight, so the derived lists never go stale.
+
 ---
 
 # 20. Task Dates
@@ -554,7 +600,7 @@ as the actual task date.
 
 Those are presentation concepts.
 
-The underlying data should represent the actual date.
+The underlying data should represent the actual date: `YYYY-MM-DD` for dates and `HH:mm` for times, both in the user's local time zone.
 
 The UI can then display:
 
@@ -652,6 +698,8 @@ archived
 ```
 
 Archived tasks should not appear in the default Today list.
+
+Archived tasks remain available in All Tasks through the status filter and can be unarchived from Task Details.
 
 ---
 
@@ -829,8 +877,8 @@ Important cases include:
 
 ### Completion
 
-- Active → completed
-- Completed → active if supported
+- Active → completed (sets `completedAt`)
+- Completed → active (clears `completedAt`)
 
 ### Dates
 

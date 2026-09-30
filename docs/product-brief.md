@@ -4,7 +4,9 @@
 
 ### Product Name
 
-To be determined.
+**Ren**
+
+The name is defined once in the codebase (`APP_NAME`) so it can be changed in one place.
 
 ### Product Type
 
@@ -178,7 +180,7 @@ V1 is a frictionless personal task-management application centered around Quick 
 - Project-based organization
 - Responsive mobile and desktop layouts
 - Local Storage persistence
-- Natural-language task parsing where useful
+- Deterministic natural-language parsing in Quick Capture
 - Empty states
 - Loading states
 - Error states
@@ -215,16 +217,14 @@ React components should not directly manipulate Local Storage throughout the app
 
 ---
 
-## 10. AI in V1
+## 10. Natural-Language Parsing
 
-AI is an enhancement to the task-management experience, not the product itself.
-
-Its primary role is to help interpret natural-language task input.
+V1 interprets natural-language task input with **deterministic parsing only**.
 
 Example:
 
 ```text
-Finish the landing page Friday at 3pm
+Finish the landing page friday at 3pm
 ```
 
 Could become:
@@ -235,17 +235,21 @@ Due date: Friday
 Due time: 3:00 PM
 ```
 
-AI should not:
+The supported syntax is defined in `screen-spec.md`.
+
+Parsing should not:
 
 - Decide what the user should do
 - Create tasks without clear user intent
-- Replace basic task-management functionality
-- Turn the application into a chat interface
 - Become a required step for creating a task
 
-If AI parsing fails, the application should still create a normal task from the user's original input.
+If parsing produces nothing useful, the application creates a normal task from the user's original input.
 
-AI output should be treated as untrusted data and validated before being used by the application.
+### AI
+
+AI-assisted parsing is **deferred to V2**.
+
+When it is introduced, AI remains an enhancement rather than the product: its output is treated as untrusted data, validated before use, and never blocks task creation. See section 14.
 
 ---
 
@@ -366,7 +370,7 @@ The product should deliberately account for:
 - Long content
 - Mobile layouts
 - Slow interactions
-- AI failure
+- Parsing failure
 
 These states are part of the product rather than afterthoughts.
 
@@ -413,6 +417,7 @@ Potential V2 capabilities include:
 - Calendar integration
 - Recurring tasks
 - Offline synchronization
+- AI-assisted natural-language parsing
 - More advanced natural-language parsing
 
 These features are intentionally excluded from V1.
@@ -469,7 +474,7 @@ The implementation should respect these constraints:
 - No unnecessary backend infrastructure.
 - Local Storage is the persistence mechanism.
 - Quick Capture must remain fast.
-- AI must not block task creation.
+- Parsing must not block task creation.
 - UI should be responsive.
 - Components should be reusable.
 - Design tokens should be centralized.
@@ -511,12 +516,11 @@ V1 is considered complete when:
 - [ ] Keyboard interactions work.
 - [ ] Long task content is handled correctly.
 
-### AI
+### Parsing
 
-- [ ] Natural-language task input can be interpreted where appropriate.
-- [ ] AI output is validated.
-- [ ] AI failure does not prevent task creation.
-- [ ] AI functionality does not dominate the interface.
+- [ ] Natural-language task input is parsed deterministically where appropriate.
+- [ ] Parsed values are visible before submission and can be ignored.
+- [ ] Parser failure does not prevent task creation.
 
 ### Design
 

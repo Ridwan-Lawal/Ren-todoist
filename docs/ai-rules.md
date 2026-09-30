@@ -453,7 +453,7 @@ Requested task no longer exists.
 
 Local Storage is unavailable or contains invalid data.
 
-### AI failure
+### Parser failure
 
 The parser fails or returns invalid data.
 
@@ -510,6 +510,7 @@ type ParsedTaskInput = {
   dueTime?: string;
   priority?: TaskPriority;
   projectName?: string;
+  tags?: string[];
 };
 ```
 
