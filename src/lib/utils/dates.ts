@@ -50,3 +50,14 @@ export function formatTime(time: string): string {
   const suffix = hours >= 12 ? "PM" : "AM";
   return `${hours % 12 || 12}:${pad(minutes)} ${suffix}`;
 }
+
+/** "This weekend": today if it is already the weekend, otherwise the coming Saturday. */
+export function thisWeekend(today: string): string {
+  const weekday = weekdayOf(today);
+  return weekday === 0 || weekday === 6 ? today : nextWeekday(today, 6);
+}
+
+/** "Next week": the next Monday after today. */
+export function nextWeek(today: string): string {
+  return nextWeekday(addDays(today, 1), 1);
+}

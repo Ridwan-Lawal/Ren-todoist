@@ -2,7 +2,7 @@ import { findProjectByName } from "@/lib/projects/project-service";
 import type { Project } from "@/lib/projects/project-types";
 import { normalizeTag } from "@/lib/tasks/tags";
 import type { ParsedTaskInput, TaskPriority } from "@/lib/tasks/task-types";
-import { addDays, nextWeekday, weekdayOf } from "@/lib/utils/dates";
+import { addDays, nextWeek, nextWeekday, thisWeekend } from "@/lib/utils/dates";
 
 type ParseContext = { today: string; projects: Project[] };
 
@@ -37,11 +37,8 @@ function resolveDate(word: string, today: string): string {
   const phrase = word.toLowerCase();
   if (phrase === "today") return today;
   if (phrase === "tomorrow") return addDays(today, 1);
-  if (phrase === "next week") return nextWeekday(addDays(today, 1), 1);
-  if (phrase === "this weekend") {
-    const weekday = weekdayOf(today);
-    return weekday === 0 || weekday === 6 ? today : nextWeekday(today, 6);
-  }
+  if (phrase === "next week") return nextWeek(today);
+  if (phrase === "this weekend") return thisWeekend(today);
   const match = WEEKDAYS.find(([pattern]) => pattern.test(phrase));
   return nextWeekday(today, match![1]);
 }
