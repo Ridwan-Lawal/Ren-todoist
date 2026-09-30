@@ -141,6 +141,19 @@ Defines:
 - dependencies between phases
 - V1 definition of done
 
+### Implementation Spec
+
+```text
+@docs/spec.md
+```
+
+Defines:
+
+- user stories
+- implementation decisions
+- testing seam and cases
+- out of scope
+
 ---
 
 # Source of Truth
@@ -155,6 +168,7 @@ When working on a task:
 - Architecture question → `@docs/architecture.md`
 - AI/code-agent behavior → `@docs/ai-rules.md`
 - Implementation order → `@docs/implementation-plan.md`
+- Consolidated V1 spec → `@docs/spec.md`
 
 If a decision is already documented, follow it.
 
